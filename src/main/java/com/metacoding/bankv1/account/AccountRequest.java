@@ -2,6 +2,8 @@ package com.metacoding.bankv1.account;
 
 import lombok.Data;
 
+import java.sql.Timestamp;
+
 public class AccountRequest {
 
     @Data

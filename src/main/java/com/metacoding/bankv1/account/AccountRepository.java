@@ -5,6 +5,7 @@ import jakarta.persistence.Query;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -45,6 +46,64 @@ public class AccountRepository {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    public List<AccountResponse.DetailDTO> findAllByNumber(int number, String type) {
+        String sql = """
+            select 
+            dt.account_number,
+            dt.account_balance,
+            dt.account_owner,
+            substr(created_at, 1, 16) created_at,
+            withdraw_number w_number,
+            deposit_number d_number,
+            amount amount,
+            case when withdraw_number = ? then withdraw_balance 
+            else deposit_balance 
+            end balance,
+            case when withdraw_number = ? then '출금' 
+            else '입금' 
+            end type 
+            from history_tb ht 
+            inner join (select at.number account_number, at.balance account_balance, ut.fullname account_owner 
+            from account_tb at 
+            inner join user_tb ut on at.user_id = ut.id 
+            where at.number = ?) dt on 1=1 
+            """;
+        String sql2 = "where deposit_number = ? or withdraw_number = ?;";
+        String sql3 = "where deposit_number = ?;";
+        String sql4 = "where withdraw_number = ?;";
+
+        if(type.equals("입금")) sql += sql3;
+        else if (type.equals("출금")) sql += sql4;
+        else sql += sql2;
+
+        Query query = em.createNativeQuery(sql);
+        query.setParameter(1, number);
+        query.setParameter(2, number);
+        query.setParameter(3, number);
+        query.setParameter(4, number);
+        if(type.equals("전체")) query.setParameter(5, number);
+
+        List<Object[]> obsList = query.getResultList();
+        List<AccountResponse.DetailDTO> detailList = new ArrayList<>();
+
+        for (Object[] obs : obsList) {
+            AccountResponse.DetailDTO detail =
+                    new AccountResponse.DetailDTO(
+                            (int) obs[0],
+                            (int) obs[1],
+                            (String) obs[2],
+                            (String) obs[3],
+                            (int) obs[4],
+                            (int) obs[5],
+                            (int) obs[6],
+                            (int) obs[7],
+                            (String) obs[8]
+                    );
+            detailList.add(detail);
+        }
+        return detailList;
     }
 
 

@@ -45,7 +45,7 @@ public class AccountService {
         historyRepository.save(transferDTO.getWithdrawNumber(), transferDTO.getDepositNumber(), transferDTO.getAmount(), withdrawAccount.getBalance(), depositAccount.getBalance());
     }
 
-    public void 계좌상세보기(int number, String type, Integer sessionUserId) {
+    public List<AccountResponse.DetailDTO> 계좌상세보기(int number, String type, Integer sessionUserId) {
         // 1. 계좌 존재 확인
         Account account = accountRepository.findByNumber(number);
         if (account == null) throw new RuntimeException("계좌가 존재하지 않습니다");
@@ -54,6 +54,7 @@ public class AccountService {
         account.계좌주인검사(sessionUserId);
 
         // 3. 조회해서 주면 됨
-
+        List<AccountResponse.DetailDTO> detailList = accountRepository.findAllByNumber(number, type);
+        return detailList;
     }
 }
