@@ -106,6 +106,78 @@ public class AccountRepository {
         return detailList;
     }
 
+    public AccountResponse.TransferUserDTO detail1(int number) {
+        String sql = """
+            select 
+            at.balance account_balance,
+            at.number account_number,
+            ut.fullname account_owner
+            from account_tb at
+            inner join user_tb ut
+            on at.user_id = ut.id
+            where at.number = ?
+            """;
+        Query query = em.createNativeQuery(sql);
+        query.setParameter(1, number);
+
+        Object[] result = (Object[]) query.getSingleResult();
+
+        AccountResponse.TransferUserDTO userInfo = new AccountResponse.TransferUserDTO(
+                ((Number) result[1]).intValue(),     // account_number
+                ((Number) result[0]).intValue(),     // account_balance
+                (String) result[2]                   // account_owner
+        );
+
+        return userInfo;
+    }
+
+
+    public List<AccountResponse.TransferListDTO> detail2(int number, String type) {
+        String sql = """
+                select substr(created_at, 1, 16) created_at,
+                withdraw_number w_number,
+                deposit_number d_number,
+                amount,
+                case when withdraw_number = ? then withdraw_balance
+                else deposit_balance
+                end balance,
+                case when withdraw_number = ? then '출금'
+                else '입금'
+                end type
+                from history_tb
+                """;
+        String sql2 = "where deposit_number = ? or withdraw_number = ?;";
+        String sql3 = "where deposit_number = ?;";
+        String sql4 = "where withdraw_number = ?;";
+
+        if(type.equals("입금")) sql += sql3;
+        else if (type.equals("출금")) sql += sql4;
+        else sql += sql2;
+
+        Query query = em.createNativeQuery(sql);
+        query.setParameter(1, number);
+        query.setParameter(2, number);
+        query.setParameter(3, number);
+        if(type.equals("전체"))  query.setParameter(4, number);
+
+        List<Object[]> obsList = query.getResultList();
+        List<AccountResponse.TransferListDTO> detailList = new ArrayList<>();
+
+        for (Object[] obs : obsList) {
+            AccountResponse.TransferListDTO detail =
+                    new AccountResponse.TransferListDTO(
+                            (String) obs[0],
+                            (int) obs[1],
+                            (int) obs[2],
+                            (int) obs[3],
+                            (int) obs[4],
+                            (String) obs[5]
+                    );
+            detailList.add(detail);
+        }
+        return detailList;
+    }
+
 
     //    public void updateWithdraw(int amount, int number) {
 //        Query query = em.createNativeQuery("update account_tb set balance = balance - ? where number = ?");

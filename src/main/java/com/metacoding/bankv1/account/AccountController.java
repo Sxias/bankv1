@@ -4,6 +4,7 @@ import com.metacoding.bankv1.user.User;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ProblemDetail;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,7 +27,7 @@ public class AccountController {
         User sessionUser = (User) session.getAttribute("sessionUser");
         if (sessionUser == null) throw new RuntimeException("로그인 후 사용해주세요");
 
-        List<AccountResponse.DetailDTO> detailList = accountService.계좌상세보기(number, type, sessionUser.getId());
+        AccountResponse.DetailDTO2 detailList = accountService.계좌상세보기(number, type, sessionUser.getId());
         request.setAttribute("models", detailList);
 //        System.out.println("number = " + number);
 //        System.out.println("type = " + type);
